@@ -30,7 +30,6 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch data when component mounts
   useEffect(() => {
     fetchSummary();
     fetchTransactions();
@@ -84,21 +83,9 @@ export default function DashboardPage() {
       });
 
       if (response.ok) {
-        const newTransaction = await response.json();
-        setTransactions(prev => [newTransaction, ...prev]);
-        
-        // Reset form
-        setFormData({ 
-          amount: '', 
-          type: 'expense', 
-          category: '', 
-          date: new Date().toISOString().split('T')[0], 
-          notes: '' 
-        });
-
-        // Refresh summary
+        setFormData({ amount: '', type: 'expense', category: '', date: new Date().toISOString().split('T')[0], notes: '' });
         fetchSummary();
-        
+        fetchTransactions();
         alert('Transaction added successfully!');
       } else {
         alert('Failed to add transaction');
@@ -111,47 +98,18 @@ export default function DashboardPage() {
     }
   };
 
-  const SummaryCards = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-600">Total Income</p>
-            <p className="text-2xl font-bold text-green-600">${summary.income.toFixed(2)}</p>
-          </div>
-          <div className="p-3 bg-green-100 rounded-full">
-            <span className="text-green-600 text-xl">📈</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-600">Total Expenses</p>
-            <p className="text-2xl font-bold text-red-600">${summary.expenses.toFixed(2)}</p>
-          </div>
-          <div className="p-3 bg-red-100 rounded-full">
-            <span className="text-red-600 text-xl">📉</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-600">Balance</p>
-            <p className={`text-2xl font-bold ${summary.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              ${summary.balance.toFixed(2)}
-            </p>
-          </div>
-          <div className="p-3 bg-blue-100 rounded-full">
-            <span className="text-blue-600 text-xl">💰</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  // Calculate category breakdown from real data
+  const getCategoryBreakdown = () => {
+    const breakdown: { [key: string]: number } = {};
+    transactions
+      .filter(t => t.type === 'expense')
+      .forEach(t => {
+        breakdown[t.category] = (breakdown[t.category] || 0) + t.amount;
+      });
+    return Object.entries(breakdown)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -206,7 +164,46 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto px-6 py-8">
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            <SummaryCards />
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Total Income</p>
+                    <p className="text-2xl font-bold text-green-600">${summary.income.toFixed(2)}</p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-full">
+                    <span className="text-green-600 text-xl">📈</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Total Expenses</p>
+                    <p className="text-2xl font-bold text-red-600">${summary.expenses.toFixed(2)}</p>
+                  </div>
+                  <div className="p-3 bg-red-100 rounded-full">
+                    <span className="text-red-600 text-xl">📉</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Balance</p>
+                    <p className={`text-2xl font-bold ${summary.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      ${summary.balance.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-blue-100 rounded-full">
+                    <span className="text-blue-600 text-xl">💰</span>
+                  </div>
+                </div>
+              </div>
+            </div>
             
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -218,16 +215,17 @@ export default function DashboardPage() {
               </div>
 
               <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-semibold mb-4">Recent Transactions</h3>
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {transactions.slice(0, 5).map((transaction) => (
-                    <div key={transaction._id} className="flex justify-between items-center">
-                      <span className="text-gray-600 capitalize">{transaction.category}</span>
-                      <span className={`font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {transaction.type === 'income' ? '+' : '-'}${transaction.amount}
-                      </span>
+                <h3 className="text-lg font-semibold mb-4">Top Expense Categories</h3>
+                <div className="space-y-3">
+                  {getCategoryBreakdown().map(([category, amount]) => (
+                    <div key={category} className="flex justify-between items-center">
+                      <span className="text-gray-600 capitalize">{category}</span>
+                      <span className="font-medium">${amount.toFixed(2)}</span>
                     </div>
                   ))}
+                  {getCategoryBreakdown().length === 0 && (
+                    <p className="text-gray-500 text-center">No expenses yet</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -336,6 +334,9 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 ))}
+                {transactions.length === 0 && (
+                  <p className="text-gray-500 text-center">No transactions yet</p>
+                )}
               </div>
             </div>
           </div>
