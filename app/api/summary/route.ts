@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
     const balance = income - expenses;
     
     return NextResponse.json({ income, expenses, balance });
-  } catch (error: unknown) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+} catch (error) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }

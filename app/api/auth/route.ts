@@ -55,7 +55,8 @@ export async function POST(request: NextRequest) {
       const user = await User.create({ name, email, password });
       return NextResponse.json({ success: true, userId: user._id, name: user.name }, { status: 201 });
     }
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  } catch (error) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }

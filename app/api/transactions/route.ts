@@ -13,8 +13,9 @@ export async function GET(request: NextRequest) {
     
     const transactions = await Transaction.find({ userId }).sort({ date: -1 });
     return NextResponse.json(transactions);
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+} catch (error) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }
 
@@ -39,7 +40,8 @@ export async function POST(request: NextRequest) {
     });
     
     return NextResponse.json(transaction, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+} catch (error) {
+    console.error('API Error:', error);
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }
