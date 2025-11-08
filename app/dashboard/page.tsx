@@ -1,5 +1,8 @@
+
 'use client';
 import { useState, useEffect } from 'react';
+import { TrendingUp, TrendingDown, Wallet, BarChart3, PlusCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Transaction {
   _id?: string;
@@ -47,6 +50,7 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error fetching summary:', error);
+      toast.error('Failed to fetch summary data');
     }
   };
 
@@ -62,6 +66,7 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error fetching transactions:', error);
+      toast.error('Failed to fetch transactions');
     }
   };
 
@@ -72,7 +77,7 @@ export default function DashboardPage() {
     try {
       const userId = localStorage.getItem('userId');
       if (!userId) {
-        alert('Please log in first');
+        toast.error('Please log in first');
         return;
       }
 
@@ -86,19 +91,18 @@ export default function DashboardPage() {
         setFormData({ amount: '', type: 'expense', category: '', date: new Date().toISOString().split('T')[0], notes: '' });
         fetchSummary();
         fetchTransactions();
-        alert('Transaction added successfully!');
+        toast.success('Transaction added successfully!');
       } else {
-        alert('Failed to add transaction');
+        toast.error('Failed to add transaction');
       }
     } catch (error) {
       console.error('Error adding transaction:', error);
-      alert('Error adding transaction');
+      toast.error('Error adding transaction');
     } finally {
       setLoading(false);
     }
   };
 
-  // Calculate category breakdown from real data
   const getCategoryBreakdown = () => {
     const breakdown: { [key: string]: number } = {};
     transactions
@@ -138,23 +142,25 @@ export default function DashboardPage() {
           <div className="flex space-x-1 border-b">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`px-4 py-2 font-medium text-sm rounded-t-lg ${
+              className={`px-4 py-2 font-medium text-sm rounded-t-lg flex items-center gap-2 ${
                 activeTab === 'overview'
                   ? 'bg-green-50 text-green-600 border-b-2 border-green-500'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              📊 Overview
+              <BarChart3 size={16} />
+              Overview
             </button>
             <button
               onClick={() => setActiveTab('input')}
-              className={`px-4 py-2 font-medium text-sm rounded-t-lg ${
+              className={`px-4 py-2 font-medium text-sm rounded-t-lg flex items-center gap-2 ${
                 activeTab === 'input'
                   ? 'bg-green-50 text-green-600 border-b-2 border-green-500'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              ➕ Add Expense
+              <PlusCircle size={16} />
+              Add Expense
             </button>
           </div>
         </div>
@@ -173,7 +179,7 @@ export default function DashboardPage() {
                     <p className="text-2xl font-bold text-green-600">${summary.income.toFixed(2)}</p>
                   </div>
                   <div className="p-3 bg-green-100 rounded-full">
-                    <span className="text-green-600 text-xl">📈</span>
+                    <TrendingUp className="text-green-600" size={24} />
                   </div>
                 </div>
               </div>
@@ -185,7 +191,7 @@ export default function DashboardPage() {
                     <p className="text-2xl font-bold text-red-600">${summary.expenses.toFixed(2)}</p>
                   </div>
                   <div className="p-3 bg-red-100 rounded-full">
-                    <span className="text-red-600 text-xl">📉</span>
+                    <TrendingDown className="text-red-600" size={24} />
                   </div>
                 </div>
               </div>
@@ -199,7 +205,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <div className="p-3 bg-blue-100 rounded-full">
-                    <span className="text-blue-600 text-xl">💰</span>
+                    <Wallet className="text-blue-600" size={24} />
                   </div>
                 </div>
               </div>
@@ -208,14 +214,17 @@ export default function DashboardPage() {
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-semibold mb-4">Income vs Expenses</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-500">Income vs Expenses</h3>
                 <div className="h-64 bg-gray-50 rounded flex items-center justify-center">
-                  <p className="text-gray-500">Chart will be implemented with chart library</p>
+                  <div className="text-center">
+                    <BarChart3 className="mx-auto text-gray-400 mb-2" size={48} />
+                    <p className="text-gray-500">Chart will be implemented with chart library</p>
+                  </div>
                 </div>
               </div>
 
               <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-semibold mb-4">Top Expense Categories</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-500">Top Expense Categories</h3>
                 <div className="space-y-3">
                   {getCategoryBreakdown().map(([category, amount]) => (
                     <div key={category} className="flex justify-between items-center">
@@ -236,7 +245,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Transaction Form */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold mb-4">Add Transaction</h3>
+              <h3 className="text-lg font-semibold mb-4 text-gray-500">Add Transaction</h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -244,7 +253,7 @@ export default function DashboardPage() {
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData({...formData, type: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
                     >
                       <option value="expense">Expense</option>
                       <option value="income">Income</option>
@@ -257,7 +266,7 @@ export default function DashboardPage() {
                       step="0.01"
                       value={formData.amount}
                       onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent placeholder:text-gray-600"
                       placeholder="0.00"
                       required
                     />
@@ -270,7 +279,7 @@ export default function DashboardPage() {
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData({...formData, category: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
                       required
                     >
                       <option value="">Select category</option>
@@ -288,7 +297,7 @@ export default function DashboardPage() {
                       type="date"
                       value={formData.date}
                       onChange={(e) => setFormData({...formData, date: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
                       required
                     />
                   </div>
@@ -299,7 +308,7 @@ export default function DashboardPage() {
                   <textarea
                     value={formData.notes}
                     onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent placeholder:text-gray-600"
                     rows={3}
                     placeholder="Optional notes..."
                   />
@@ -317,7 +326,7 @@ export default function DashboardPage() {
 
             {/* Transaction List */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold mb-4">Recent Transactions</h3>
+              <h3 className="text-lg font-semibold mb-4 text-gray-500">Recent Transactions</h3>
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {transactions.map((transaction) => (
                   <div key={transaction._id} className="flex justify-between items-center p-3 border border-gray-100 rounded-lg">
