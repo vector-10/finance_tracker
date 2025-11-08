@@ -32,6 +32,19 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<Summary>({ income: 0, expenses: 0, balance: 0 });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    // Get user name from localStorage or make API call
+    const storedName = localStorage.getItem('userName');
+    if (storedName) {
+      setUserName(storedName);
+    }
+    
+    fetchSummary();
+    fetchTransactions();
+  }, []);
+
 
   useEffect(() => {
     fetchSummary();
@@ -121,16 +134,18 @@ export default function DashboardPage() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-xl font-bold text-green-600">SpenTrack</h1>
-              <p className="text-sm text-gray-600">Welcome back, John</p>
-            </div>
+          <div>
+  <h1 className="text-xl font-bold text-green-600">SpenTrack</h1>
+  <p className="text-sm text-gray-600">
+    Welcome back, {userName || 'User'}
+  </p>
+</div>
             <button 
               onClick={() => {
                 localStorage.removeItem('userId');
                 window.location.href = '/';
               }}
-              className="text-gray-600 hover:text-gray-800"
+              className="text-white hover:text-gray-800 bg-red-600 p-4"
             >
               Logout
             </button>
