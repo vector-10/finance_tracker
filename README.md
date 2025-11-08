@@ -1,4 +1,4 @@
-# SpenTrack - Personal Finance Tracker
+# SpenTrack - Personal Finance Tracker (Very short time)
 
 A comprehensive web application for tracking personal finances, built with Next.js 15, TypeScript, MongoDB, and featuring real-time charts and analytics.
 
