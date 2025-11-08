@@ -77,7 +77,7 @@ export default function AuthPage() {
                   name="name"
                   type="text"
                   required
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xs focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white/50 backdrop-blur-sm"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xs focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white/50 backdrop-blur-sm placeholder:text-gray-600"
                   placeholder="Full Name"
                 />
               )}
@@ -85,14 +85,14 @@ export default function AuthPage() {
                 name="email"
                 type="email"
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xs focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white/50 backdrop-blur-sm"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xs focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white/50 backdrop-blur-sm placeholder:text-gray-600"
                 placeholder="Email"
               />
               <input
                 name="password"
                 type="password"
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xs focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white/50 backdrop-blur-sm"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xs focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white/50 backdrop-blur-sm placeholder:text-gray-600"
                 placeholder="Password"
               />
             </div>
