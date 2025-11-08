@@ -1,8 +1,8 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Wallet, BarChart3, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface Transaction {
   _id?: string;
@@ -32,19 +32,6 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<Summary>({ income: 0, expenses: 0, balance: 0 });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
-  const [userName, setUserName] = useState('');
-
-  useEffect(() => {
-    // Get user name from localStorage or make API call
-    const storedName = localStorage.getItem('userName');
-    if (storedName) {
-      setUserName(storedName);
-    }
-    
-    fetchSummary();
-    fetchTransactions();
-  }, []);
-
 
   useEffect(() => {
     fetchSummary();
@@ -116,15 +103,47 @@ export default function DashboardPage() {
     }
   };
 
-  const getCategoryBreakdown = () => {
+  // Prepare chart data
+  const getMonthlyData = () => {
+    const monthlyData: { [key: string]: { income: number; expenses: number; month: string } } = {};
+    
+    transactions.forEach(t => {
+      const month = new Date(t.date).toLocaleDateString('en-US', { month: 'short' });
+      if (!monthlyData[month]) {
+        monthlyData[month] = { income: 0, expenses: 0, month };
+      }
+      
+      if (t.type === 'income') {
+        monthlyData[month].income += t.amount;
+      } else {
+        monthlyData[month].expenses += t.amount;
+      }
+    });
+
+    return Object.values(monthlyData);
+  };
+
+  const getCategoryData = () => {
     const breakdown: { [key: string]: number } = {};
     transactions
       .filter(t => t.type === 'expense')
       .forEach(t => {
         breakdown[t.category] = (breakdown[t.category] || 0) + t.amount;
       });
+
+    const colors = ['#10B981', '#EF4444', '#3B82F6', '#F59E0B', '#8B5CF6'];
+    
     return Object.entries(breakdown)
-      .sort(([,a], [,b]) => b - a)
+      .map(([name, value], index) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        value,
+        color: colors[index % colors.length]
+      }));
+  };
+
+  const getCategoryBreakdown = () => {
+    return getCategoryData()
+      .sort((a, b) => b.value - a.value)
       .slice(0, 5);
   };
 
@@ -134,18 +153,16 @@ export default function DashboardPage() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
-          <div>
-  <h1 className="text-xl font-bold text-green-600">SpenTrack</h1>
-  <p className="text-sm text-gray-600">
-    Welcome back, {userName || 'User'}
-  </p>
-</div>
+            <div>
+              <h1 className="text-xl font-bold text-green-600">SpenTrack</h1>
+              <p className="text-sm text-gray-600">Welcome back, John</p>
+            </div>
             <button 
               onClick={() => {
                 localStorage.removeItem('userId');
                 window.location.href = '/';
               }}
-              className="text-white hover:text-gray-800 bg-red-600 p-4"
+              className="text-gray-600 hover:text-gray-800"
             >
               Logout
             </button>
@@ -228,27 +245,68 @@ export default function DashboardPage() {
             
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Line Chart */}
               <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-semibold mb-4 text-gray-500">Income vs Expenses</h3>
-                <div className="h-64 bg-gray-50 rounded flex items-center justify-center">
-                  <div className="text-center">
-                    <BarChart3 className="mx-auto text-gray-400 mb-2" size={48} />
-                    <p className="text-gray-500">Chart will be implemented with chart library</p>
-                  </div>
+                <h3 className="text-lg font-semibold mb-4">Income vs Expenses</h3>
+                <div className="h-64">
+                  {getMonthlyData().length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={getMonthlyData()}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`$${value}`, '']} />
+                        <Line 
+                          type="monotone" 
+                          dataKey="income" 
+                          stroke="#10B981" 
+                          strokeWidth={2}
+                          name="Income"
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="expenses" 
+                          stroke="#EF4444" 
+                          strokeWidth={2}
+                          name="Expenses"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-gray-500">
+                      Add transactions to see chart
+                    </div>
+                  )}
                 </div>
               </div>
 
+              {/* Pie Chart */}
               <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <h3 className="text-lg font-semibold mb-4 text-gray-500">Top Expense Categories</h3>
-                <div className="space-y-3">
-                  {getCategoryBreakdown().map(([category, amount]) => (
-                    <div key={category} className="flex justify-between items-center">
-                      <span className="text-gray-600 capitalize">{category}</span>
-                      <span className="font-medium">${amount.toFixed(2)}</span>
+                <h3 className="text-lg font-semibold mb-4">Expense Categories</h3>
+                <div className="h-64">
+                  {getCategoryData().length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={getCategoryData()}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, value }) => `${name}: $${value}`}
+                        >
+                          {getCategoryData().map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => [`$${value}`, 'Amount']} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-gray-500">
+                      Add expenses to see breakdown
                     </div>
-                  ))}
-                  {getCategoryBreakdown().length === 0 && (
-                    <p className="text-gray-500 text-center">No expenses yet</p>
                   )}
                 </div>
               </div>
@@ -260,7 +318,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Transaction Form */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold mb-4 text-gray-500">Add Transaction</h3>
+              <h3 className="text-lg font-semibold mb-4">Add Transaction</h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -341,7 +399,7 @@ export default function DashboardPage() {
 
             {/* Transaction List */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold mb-4 text-gray-500">Recent Transactions</h3>
+              <h3 className="text-lg font-semibold mb-4">Recent Transactions</h3>
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {transactions.map((transaction) => (
                   <div key={transaction._id} className="flex justify-between items-center p-3 border border-gray-100 rounded-lg">
