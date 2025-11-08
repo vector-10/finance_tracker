@@ -4,5 +4,6 @@ const MONGODB_URI = process.env.MONGODB_URI!;
 
 export default async function dbConnect() {
   if (mongoose.connection.readyState >= 1) return;
+  console.log("DB connected")
   return mongoose.connect(MONGODB_URI);
 }
